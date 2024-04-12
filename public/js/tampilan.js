@@ -5,36 +5,6 @@ fetch('https://api.ipify.org?format=json')
   })
   .catch(error => console.error('Error fetching IP:', error));
 
-fetch('/visitor')
-.then(response => response.json())
-.then(data => {
-  const visitorCount = data;
-  document.getElementById('visitor-count').innerText = visitorCount;
-})
-.catch(error => {
-  console.error('Error fetching data:', error);
-});
-
-fetch('/getRequests')
-.then(response => response.json())
-.then(data => {
-  const reqtotal = data.req_total;
-  document.getElementById('req-total').innerText = reqtotal;
-})
-.catch(error => {
-  console.error('Error fetching data:', error);
-});
-
-fetch('/getRequests')
-.then(response => response.json())
-.then(data => {
-  const reqtoday = data.req_perhari;
-  document.getElementById('req-today').innerText = reqtoday;
-})
-.catch(error => {
-  console.error('Error fetching data:', error);
-});
-
 navigator.getBattery().then(function(battery) {
   updateBatteryStatus(battery);
 
