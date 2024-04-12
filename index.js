@@ -13,7 +13,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const port = 3000;
 
 app.use('/api', (req, res, next) => {
-    let data = JSON.parse(fs.readFileSync('db/reqtotal.json', 'utf8'));
+    let data = JSON.parse(fs.readFileSync('db/req.json', 'utf8'));
     let today = new Date().toISOString().split('T')[0];
     let lastResetDay = new Date(data.time).toISOString().split('T')[0];
 
