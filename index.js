@@ -25,7 +25,7 @@ app.use('/api', (req, res, next) => {
     data.req_perhari++;
     data.req_total++;
 
-    fs.writeFileSync('db/reqtotal.json', JSON.stringify(data));
+    fs.writeFileSync('db/req.json', JSON.stringify(data));
 
     next();
 });
