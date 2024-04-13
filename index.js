@@ -3,6 +3,7 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs');
 const ptz = require('./function/index') 
+const axios = require('axios')
 
 var app = express();
 app.enable("trust proxy");
