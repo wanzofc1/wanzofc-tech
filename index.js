@@ -108,6 +108,18 @@ app.get('/api/ragbot', verifyToken, verifyApiKey, async (req, res) => {
   }
 });
 
+app.post('/admin/generateToken', (req, res) => {
+  const { username, password } = req.body;
+
+  // Validasi username dan password
+  if (username === 'admin' && password === 'admin123') {
+    const token = jwt.sign({ username }, 'your-secret-key', { expiresIn: '1h' });
+    res.json({ token });
+  } else {
+    res.status(401).json({ error: 'Username atau password salah' });
+  }
+});
+
 // DegreeGuru Endpoint
 app.get('/api/degreeguru', verifyToken, verifyApiKey, async (req, res) => {
   try {
