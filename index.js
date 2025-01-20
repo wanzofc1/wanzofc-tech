@@ -1,46 +1,61 @@
-var express = require("express"), cors = require("cors"), secure = require("ssl-express-www");
-const path = require('path');
-const os = require('os');
-const fs = require('fs');
-const ptz = require('./function/index');
-const axios = require('axios');
-const jwt = require('jsonwebtoken'); // Untuk JWT Authentication
+const express = require("express");
+const cors = require("cors");
+const secure = require("ssl-express-www");
+const bodyParser = require("body-parser");
+const path = require("path");
+const os = require("os");
+const fs = require("fs");
+const jwt = require("jsonwebtoken");
+const axios = require("axios");
+const ptz = require("./function/index");
 
-var app = express();
+const app = express();
 app.enable("trust proxy");
 app.set("json spaces", 2);
+
+// Middleware
 app.use(cors());
 app.use(secure);
-app.use(express.static(path.join(__dirname, 'public')));
-const port = 3000;
+app.use(bodyParser.json()); // Parsing JSON
+app.use(bodyParser.urlencoded({ extended: true })); // Parsing URL Encoded Data
+app.use(express.static(path.join(__dirname, "public")));
 
-// Middleware untuk memverifikasi JWT Token
+const port = 3000;
+const JWT_SECRET = "abcdefghijklmnopqrstuvwxyz"; // Ganti dengan yang lebih aman
+const API_KEY = "abcdefghijklmnopqrstuvwxyz"; // API Key default
+
+// Middleware: Verifikasi Token JWT
 const verifyToken = (req, res, next) => {
-  const token = req.headers['authorization']?.split(' ')[1];
+  const token = req.headers["authorization"]?.split(" ")[1];
   if (!token) {
-    return res.status(403).send({ error: 'Token tidak ditemukan' });
+    return res.status(403).json({ error: "Token tidak ditemukan" });
   }
 
-  jwt.verify(token, 'abcdefghijklmnopqrstuvwxyz', (err, decoded) => {
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) {
-      return res.status(403).send({ error: 'Token tidak valid' });
+      return res.status(403).json({ error: "Token tidak valid" });
     }
-    req.user = decoded;
+    req.user = decoded; // Simpan informasi pengguna di req
     next();
   });
 };
 
-// Middleware untuk memverifikasi API Key
+// Middleware: Verifikasi API Key
 const verifyApiKey = (req, res, next) => {
   const apiKey = req.query.apiKey;
-  if (apiKey !== 'abcdefghijklmnopqrstuvwxyz') {
-    return res.status(403).json({ error: 'API Key tidak valid' });
+  if (apiKey !== API_KEY) {
+    return res.status(403).json({ error: "API Key tidak valid" });
   }
   next();
 };
 
+// Endpoint Utama (Home)
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
 // Endpoint Stats
-app.get('/stats', verifyToken, (req, res) => {
+app.get("/stats", verifyToken, (req, res) => {
   const stats = {
     platform: os.platform(),
     architecture: os.arch(),
@@ -59,165 +74,140 @@ app.get('/stats', verifyToken, (req, res) => {
     nodeVersion: process.version,
     execPath: process.execPath,
     cwd: process.cwd(),
-    memoryUsage: process.memoryUsage()
+    memoryUsage: process.memoryUsage(),
   };
   res.json(stats);
 });
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+// Endpoint Admin
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "admin.html"));
 });
 
+// Generate Token JWT
+app.post("/admin/generateToken", (req, res) => {
+  const { username, password } = req.body;
 
-// Endpoint Admin untuk Mengatur Batasan API
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin.html'));
+  if (username === "admin" && password === "admin123") {
+    const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: "1h" });
+    res.json({ token });
+  } else {
+    res.status(401).json({ error: "Username atau password salah" });
+  }
 });
 
-// Endpoint untuk mengatur batasan API melalui Admin
-app.post('/admin/setLimits', (req, res) => {
-  // Fungsi untuk mengatur batasan di sini
+// Set Batasan API
+app.post("/admin/setLimits", (req, res) => {
   const { apiLimit, customApiKey } = req.body;
+
   if (!apiLimit || !customApiKey) {
-    return res.status(400).json({ error: 'API Limit atau API Key tidak lengkap' });
+    return res.status(400).json({ error: "API Limit atau API Key tidak lengkap" });
   }
 
-  // Simpan pengaturan ke dalam database atau file konfigurasi
-  // Misalnya, menyimpan dalam file JSON atau database:
   const config = { apiLimit, customApiKey };
-  fs.writeFileSync('config.json', JSON.stringify(config));
-
-  res.status(200).json({ message: 'Batasan dan API Key berhasil disetting' });
+  fs.writeFileSync("config.json", JSON.stringify(config));
+  res.status(200).json({ message: "Batasan dan API Key berhasil disetting" });
 });
 
-// Ragbot Endpoint
-app.get('/api/ragbot', verifyToken, verifyApiKey, async (req, res) => {
+// Endpoint Ragbot
+app.get("/api/ragbot", verifyToken, verifyApiKey, async (req, res) => {
   try {
     const message = req.query.message;
     if (!message) {
       return res.status(400).json({ error: 'Parameter "message" tidak ditemukan' });
     }
     const response = await ptz.ragBot(message);
-    res.status(200).json({
-      status: 200,
-      creator: "aabrayy",
-      data: { response }
-    });
+    res.status(200).json({ status: 200, creator: "aabrayy", data: { response } });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.post('/admin/generateToken', (req, res) => {
-  const { username, password } = req.body;
-
-  // Validasi username dan password
-  if (username === 'admin' && password === 'admin123') {
-    const token = jwt.sign({ username }, 'your-secret-key', { expiresIn: '1h' });
-    res.json({ token });
-  } else {
-    res.status(401).json({ error: 'Username atau password salah' });
-  }
-});
-
-// DegreeGuru Endpoint
-app.get('/api/degreeguru', verifyToken, verifyApiKey, async (req, res) => {
+// Endpoint DegreeGuru
+app.get("/api/degreeguru", verifyToken, verifyApiKey, async (req, res) => {
   try {
-    const { message } = req.query;
+    const message = req.query.message;
     if (!message) {
       return res.status(400).json({ error: 'Parameter "message" tidak ditemukan' });
     }
     const response = await ptz.degreeGuru(message);
-    res.status(200).json({
-      status: 200,
-      creator: "aabrayy",
-      data: { response }
-    });
+    res.status(200).json({ status: 200, creator: "aabrayy", data: { response } });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// SmartContract Endpoint
-app.get('/api/smartcontract', verifyToken, verifyApiKey, async (req, res) => {
+// Endpoint SmartContract
+app.get("/api/smartcontract", verifyToken, verifyApiKey, async (req, res) => {
   try {
     const message = req.query.message;
     if (!message) {
       return res.status(400).json({ error: 'Parameter "message" tidak ditemukan' });
     }
     const response = await ptz.smartContract(message);
-    res.status(200).json({
-      status: 200,
-      creator: "aabrayy",
-      data: { response }
-    });
+    res.status(200).json({ status: 200, creator: "aabrayy", data: { response } });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// BlackboxAIChat Endpoint
-app.get('/api/blackboxAIChat', verifyToken, verifyApiKey, async (req, res) => {
+// Endpoint BlackboxAIChat
+app.get("/api/blackboxAIChat", verifyToken, verifyApiKey, async (req, res) => {
   try {
     const message = req.query.message;
     if (!message) {
       return res.status(400).json({ error: 'Parameter "message" tidak ditemukan' });
     }
     const response = await ptz.blackboxAIChat(message);
-    res.status(200).json({
-      status: 200,
-      creator: "aabrayy",
-      data: { response }
-    });
+    res.status(200).json({ status: 200, creator: "aabrayy", data: { response } });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// GPT Endpoint
+// Endpoint GPT
 app.get("/api/gpt", verifyToken, verifyApiKey, async (req, res) => {
   const text = req.query.text;
 
   if (!text) {
-    return res.status(400).send("Parameter 'text' is required.");
+    return res.status(400).json({ error: "Parameter 'text' is required." });
   }
 
   try {
     const requestData = {
       operation: "chatExecute",
       params: {
-        text: text,
+        text,
         languageId: "6094f9b4addddd000c04c94b",
         toneId: "60572a649bdd4272b8fe358c",
-        voiceId: ""
-      }
+        voiceId: "",
+      },
     };
 
     const config = {
       headers: {
         Accept: "application/json, text/plain, */*",
         Authentication: "Bearer your-bearer-token-here",
-        "Content-Type": "application/json"
-      }
+        "Content-Type": "application/json",
+      },
     };
-    let { data } = await axios.post("https://api.rytr.me/", requestData, config);
-    data.data.content = data.data.content.replace(/<\/?p[^>]*>/g, '');
+    const { data } = await axios.post("https://api.rytr.me/", requestData, config);
+    data.data.content = data.data.content.replace(/<\/?p[^>]*>/g, "");
     res.json(data);
   } catch (error) {
     console.error(error);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
-app.use((req, res, next) => {
-  res.status(404).send("Halaman tidak ditemukan");
-});
-
+// Middleware untuk 404 dan Error Handler
+app.use((req, res) => res.status(404).send("Halaman tidak ditemukan"));
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send('Ada kesalahan pada server');
+  res.status(500).send("Ada kesalahan pada server");
 });
 
+// Jalankan Server
 app.listen(port, () => {
   console.log(`Server berjalan di http://localhost:${port}`);
 });
