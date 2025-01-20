@@ -1,0 +1,4 @@
+{
+  "apiLimit": 10000, // Batas maksimum permintaan API
+  "customApiKey": "wanzbrayy" // API Key default
+}
