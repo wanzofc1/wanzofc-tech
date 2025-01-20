@@ -50,6 +50,10 @@
       border-radius: 5px;
       background-color: #e9ecef;
     }
+
+    .error {
+      color: red;
+    }
   </style>
 </head>
 <body>
@@ -84,7 +88,7 @@
   <div id="settingsResult" class="result" style="display: none;"></div>
 
   <script>
-    const baseURL = "http://localhost:3000";
+    const baseURL = "https://wanz-tech.vercel.app";
 
     // Form Generate Token
     const tokenForm = document.getElementById("tokenForm");
@@ -96,25 +100,26 @@
       const username = document.getElementById("username").value;
       const password = document.getElementById("password").value;
 
-      // Sederhanakan pembuatan token dengan payload sederhana
-      const payload = { username, password };
-      const secretKey = "your-secret-key";
-
       try {
-        // Membuat JWT Token menggunakan payload dan secret key
-        const token = await fetch(`${baseURL}/generate-token`, {
+        const response = await fetch(`${baseURL}/admin/generateToken`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }).then((res) => res.json());
+          body: JSON.stringify({ username, password }),
+        });
 
-        if (token.error) throw new Error(token.error);
+        const result = await response.json();
+
+        if (response.status !== 200) {
+          throw new Error(result.error || "Gagal membuat token.");
+        }
 
         tokenResult.style.display = "block";
-        tokenResult.textContent = `JWT Token: ${token.token}`;
+        tokenResult.textContent = `JWT Token: ${result.token}`;
+        tokenResult.classList.remove("error");
       } catch (error) {
         tokenResult.style.display = "block";
         tokenResult.textContent = `Error: ${error.message}`;
+        tokenResult.classList.add("error");
       }
     });
 
@@ -128,25 +133,41 @@
       const apiKey = document.getElementById("apiKey").value;
       const apiLimit = document.getElementById("apiLimit").value;
 
+      const token = tokenResult.textContent.split(": ")[1];
+
+      if (!token) {
+        settingsResult.style.display = "block";
+        settingsResult.textContent = "Error: Token belum dibuat.";
+        settingsResult.classList.add("error");
+        return;
+      }
+
       try {
         const response = await fetch(`${baseURL}/admin/setLimits`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${tokenResult.textContent.split(": ")[1]}`,
+            Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ apiKey, apiLimit }),
-        }).then((res) => res.json());
+          body: JSON.stringify({ customApiKey: apiKey, apiLimit }),
+        });
 
-        if (response.error) throw new Error(response.error);
+        const result = await response.json();
+
+        if (response.status !== 200) {
+          throw new Error(result.error || "Gagal menyimpan pengaturan.");
+        }
 
         settingsResult.style.display = "block";
         settingsResult.textContent = "Settings berhasil disimpan!";
+        settingsResult.classList.remove("error");
       } catch (error) {
         settingsResult.style.display = "block";
         settingsResult.textContent = `Error: ${error.message}`;
+        settingsResult.classList.add("error");
       }
     });
   </script>
 </body>
 </html>
+
