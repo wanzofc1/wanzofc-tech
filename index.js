@@ -64,6 +64,11 @@ app.get('/stats', verifyToken, (req, res) => {
   res.json(stats);
 });
 
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+
 // Endpoint Admin untuk Mengatur Batasan API
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
