@@ -202,12 +202,50 @@
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
-
+    <canvas id="bg-canvas"></canvas>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="vendor/jquery/jquery.min.js"></script>
     <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
     <script src="js/ruang-admin.min.js"></script>
     <script src="js/tampilan.js"></script>
+    <script>
+const canvas = document.getElementById('bg-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.setZ(30);
+const geometry = new THREE.SphereGeometry(0.25, 24, 24);
+const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+const stars = [];
+function addStar() {
+    const star = new THREE.Mesh(geometry, material);
+    const [x, y, z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(100));
+    star.position.set(x, y, z);
+    scene.add(star);
+    stars.push(star);
+}
+Array(500).fill().forEach(addStar);
+function animate() {
+    requestAnimationFrame(animate);
+    stars.forEach(star => star.rotation.y += 0.01);
+    renderer.render(scene, camera);
+}
+animate();
+const cursor = document.createElement('div');
+cursor.style.width = '10px';
+cursor.style.height = '10px';
+cursor.style.borderRadius = '50%';
+cursor.style.position = 'absolute';
+cursor.style.pointerEvents = 'none';
+cursor.style.background = 'radial-gradient(circle, rgba(0,255,255,1) 0%, rgba(0,128,255,0.5) 70%)';
+document.body.appendChild(cursor);
+window.addEventListener('mousemove', (e) => {
+    cursor.style.left = e.pageX + 'px';
+    cursor.style.top = e.pageY + 'px';
+});
+    </script>
 </body>
-
 </html>
