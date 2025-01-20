@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f4f4f9;
+      color: #333;
+    }
+
+    h1 {
+      color: #222;
+    }
+
+    form {
+      margin-bottom: 20px;
+      padding: 15px;
+      border: 1px solid #ccc;
+      background: #fff;
+      border-radius: 5px;
+    }
+
+    input, button {
+      margin: 10px 0;
+      padding: 10px;
+      width: 100%;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      background-color: #28a745;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #218838;
+    }
+
+    .result {
+      margin-top: 15px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background-color: #e9ecef;
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin Panel</h1>
+
+  <!-- Form untuk menghasilkan token JWT -->
+  <form id="tokenForm">
+    <h3>Generate JWT Token</h3>
+    <label for="username">Username:</label>
+    <input type="text" id="username" placeholder="Masukkan username..." required>
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" placeholder="Masukkan password..." required>
+
+    <button type="submit">Generate Token</button>
+  </form>
+
+  <div id="tokenResult" class="result" style="display: none;"></div>
+
+  <!-- Form untuk mengatur API Key dan batasan -->
+  <form id="settingsForm">
+    <h3>Set API Key & Limits</h3>
+    <label for="apiKey">API Key:</label>
+    <input type="text" id="apiKey" placeholder="Masukkan API Key..." required>
+
+    <label for="apiLimit">API Limit:</label>
+    <input type="number" id="apiLimit" placeholder="Masukkan batas API..." required>
+
+    <button type="submit">Set Settings</button>
+  </form>
+
+  <div id="settingsResult" class="result" style="display: none;"></div>
+
+  <script>
+    const baseURL = "http://localhost:3000";
+
+    // Form Generate Token
+    const tokenForm = document.getElementById("tokenForm");
+    const tokenResult = document.getElementById("tokenResult");
+
+    tokenForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      // Sederhanakan pembuatan token dengan payload sederhana
+      const payload = { username, password };
+      const secretKey = "your-secret-key";
+
+      try {
+        // Membuat JWT Token menggunakan payload dan secret key
+        const token = await fetch(`${baseURL}/generate-token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }).then((res) => res.json());
+
+        if (token.error) throw new Error(token.error);
+
+        tokenResult.style.display = "block";
+        tokenResult.textContent = `JWT Token: ${token.token}`;
+      } catch (error) {
+        tokenResult.style.display = "block";
+        tokenResult.textContent = `Error: ${error.message}`;
+      }
+    });
+
+    // Form untuk mengatur API Key dan batasan
+    const settingsForm = document.getElementById("settingsForm");
+    const settingsResult = document.getElementById("settingsResult");
+
+    settingsForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const apiKey = document.getElementById("apiKey").value;
+      const apiLimit = document.getElementById("apiLimit").value;
+
+      try {
+        const response = await fetch(`${baseURL}/admin/setLimits`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${tokenResult.textContent.split(": ")[1]}`,
+          },
+          body: JSON.stringify({ apiKey, apiLimit }),
+        }).then((res) => res.json());
+
+        if (response.error) throw new Error(response.error);
+
+        settingsResult.style.display = "block";
+        settingsResult.textContent = "Settings berhasil disimpan!";
+      } catch (error) {
+        settingsResult.style.display = "block";
+        settingsResult.textContent = `Error: ${error.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
