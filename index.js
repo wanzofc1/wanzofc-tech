@@ -50,7 +50,7 @@ app.get('/api/ragbot', async (req, res) => {
     const response = await ptz.ragBot(message);
     res.status(200).json({
       status: 200,
-      creator: "siputzx",
+      creator: "aabrayy",
       data: { response }
     });
   } catch (error) {
@@ -68,7 +68,7 @@ app.get('/api/degreeguru', async (req, res) => {
     const response = await ptz.degreeGuru(message);
     res.status(200).json({
       status: 200,
-      creator: "siputzx",
+      creator: "aabrayy",
       data: { response }
     });
   } catch (error) {
@@ -86,7 +86,7 @@ app.get('/api/smartcontract', async (req, res) => {
     const response = await ptz.smartContract(message);
     res.status(200).json({
       status: 200,
-      creator: "siputzx",
+      creator: "aabrayy",
       data: { response }
     });
   } catch (error) {
@@ -104,7 +104,7 @@ app.get('/api/blackboxAIChat', async (req, res) => {
     const response = await ptz.blackboxAIChat(message);
     res.status(200).json({
       status: 200,
-      creator: "siputzx",
+      creator: "aabrayy",
       data: { response }
     });
   } catch (error) {
