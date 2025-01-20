@@ -21,7 +21,7 @@ const verifyToken = (req, res, next) => {
     return res.status(403).send({ error: 'Token tidak ditemukan' });
   }
 
-  jwt.verify(token, 'your-secret-key', (err, decoded) => {
+  jwt.verify(token, 'abcdefghijklmnopqrstuvwxyz', (err, decoded) => {
     if (err) {
       return res.status(403).send({ error: 'Token tidak valid' });
     }
