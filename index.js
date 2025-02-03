@@ -57,7 +57,23 @@ app.get('/api/ragbot', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
+app.get('/api/ai/image2text', async (req, res) => {
+    try {
+        const { data } = await axios.get("https://api.siputzx.my.id/api/ai/image2text?url=https://cataas.com/cat");
+        res.json({ creator: "WANZOFC TECH", result: true, message: "Image to Text", data: formatParagraph(data?.data) });
+    } catch {
+        res.status(500).json({ creator: "WANZOFC TECH", result: false, message: "Image to Text bermasalah." });
+    }
+});
+app.get('/api/ai/gemini-pro', async (req, res) => {
+    const query = req.query.content || "hai";
+    try {
+        const { data } = await axios.get(`https://api.siputzx.my.id/api/ai/gemini-pro?content=${encodeURIComponent(query)}`);
+        res.json({ creator: "WANZOFC TECH", result: true, message: "Gemini Pro AI", data: formatParagraph(data?.data) });
+    } catch {
+        res.status(500).json({ creator: "WANZOFC TECH", result: false, message: "Gemini Pro bermasalah." });
+    }
+});
 // Endpoint untuk degreeGuru
 app.get('/api/degreeguru', async (req, res) => {
   try {
